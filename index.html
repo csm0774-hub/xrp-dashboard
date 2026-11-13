@@ -100,6 +100,19 @@
     nav#tabs button.on{color:var(--accent);background:#152238}
     .big{font-size:26px}
   }
+  /* PC 모니터: 화면 폭 전체 사용 */
+  @media (min-width:1001px){
+    main{max-width:none;padding:14px 18px;gap:14px;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));grid-auto-flow:row dense}
+    #trend,#supply,#features{grid-column:span 2}
+    #issueList{max-height:560px;overflow:auto;padding-right:6px}
+    #errBox,footer{max-width:none;margin-left:18px;margin-right:18px}
+    header{padding:10px 18px}
+    header h1{font-size:17px}
+  }
+  @media (min-width:2200px){
+    #issues{grid-row:span 2}
+    #issueList{max-height:1100px}
+  }
   /* 펼친 화면(폴드 내부 화면·태블릿) */
   @media (min-width:701px) and (max-width:1000px){
     main{grid-template-columns:1fr 1fr}
@@ -1462,7 +1475,7 @@ window.addEventListener("unhandledrejection", function (e) { showErr("비동기 
       return;
     }
     if (!box.offsetParent) return;
-    const w = Math.max(260, box.clientWidth || 320), h = 150, padL = 4, padB = 18, padT = 14;
+    const w = Math.max(260, box.clientWidth || 320), h = w > 700 ? 240 : 150, padL = 4, padB = 18, padT = 14;
     const mn = Math.min(0, ...vals), mx = Math.max(...vals) || 1;
     const X = i => padL + i / Math.max(1, trPts.length - 1) * (w - padL * 2);
     const Y = v => padT + (1 - (v - mn) / (mx - mn || 1)) * (h - padT - padB);
