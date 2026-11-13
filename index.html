@@ -73,6 +73,16 @@
   .trc .vl{font-size:15px;font-weight:700}
   .trc .ch{font-size:11px}
   #trTip{position:absolute;pointer-events:none;background:#1b2638;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;white-space:nowrap;display:none;z-index:3}
+  details.iss{border-bottom:1px solid #1f2a3d;padding:7px 0}
+  details.iss:last-child{border-bottom:0}
+  details.iss summary{cursor:pointer;list-style:none;line-height:1.6;font-size:13px}
+  details.iss summary::-webkit-details-marker{display:none}
+  details.iss summary::before{content:"▸";color:var(--muted);display:inline-block;width:14px;transition:transform .15s}
+  details.iss[open] summary::before{transform:rotate(90deg)}
+  details.iss summary:hover b{color:var(--accent)}
+  .issBody{margin:6px 0 4px 14px;font-size:13px;color:#c9d4e5;line-height:1.6}
+  details.iss > .muted{margin-left:14px}
+  #issues > details.iss{margin-top:8px;border-top:1px solid #1f2a3d;border-bottom:0}
   .tag.in{background:#0f3a24;color:var(--up)} .tag.out{background:#3a1720;color:var(--down)}
   .switch{display:flex;align-items:center;gap:6px}
   .switch input{width:18px;height:18px}
@@ -104,14 +114,13 @@
   @media (min-width:1001px){
     main{max-width:none;padding:14px 18px;gap:14px;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));grid-auto-flow:row dense}
     #trend,#supply,#features{grid-column:span 2}
-    #issueList{max-height:560px;overflow:auto;padding-right:6px}
     #errBox,footer{max-width:none;margin-left:18px;margin-right:18px}
     header{padding:10px 18px}
     header h1{font-size:17px}
   }
-  @media (min-width:2200px){
-    #issues{grid-row:span 2}
-    #issueList{max-height:1100px}
+  @media (min-width:701px){
+    main.masonry{grid-auto-rows:2px;row-gap:0;align-items:start}
+    main.masonry > .card{margin-bottom:14px}
   }
   /* 펼친 화면(폴드 내부 화면·태블릿) */
   @media (min-width:701px) and (max-width:1000px){
@@ -146,10 +155,9 @@
 
   <!-- 주요 이슈사항 -->
   <section class="card" data-tab="price" id="issues">
-    <h2>XRP 주요 이슈사항 <small id="issueStamp">—</small></h2>
-    <div class="list" id="issueList" style="max-height:none"></div>
-    <div class="sect-title">앞으로 지켜볼 일정</div>
-    <div class="list" id="watchItems" style="max-height:none"></div>
+    <h2>XRP 주요 이슈사항 <small><span id="issueStamp">—</span> · <a href="#" id="issueAll">모두 펼치기</a></small></h2>
+    <div id="issueList"></div>
+    <details class="iss"><summary><b>앞으로 지켜볼 일정</b></summary><div class="list" id="watchItems" style="max-height:none"></div></details>
     <div class="sect-title">실시간 XRP 뉴스 <small class="muted" id="newsAt"></small></div>
     <div class="list" id="newsList" style="max-height:300px"><div class="muted">불러오는 중…</div></div>
   </section>
@@ -1073,13 +1081,13 @@ window.addEventListener("unhandledrejection", function (e) { showErr("비동기 
     const box = $("issueList"); box.textContent = "";
     const tagCls = { "호재": "in", "악재": "out", "주의": "hot" };
     ISSUES.slice().sort((a, b) => b.d.localeCompare(a.d)).forEach(x => {
-      const it = el("div", "it");
-      const top = el("div");
-      top.appendChild(el("span", "tag " + (tagCls[x.tag] || ""), x.tag)); top.firstChild.style.marginLeft = "0";
-      top.appendChild(el("b", null, " " + x.title));
-      top.appendChild(el("span", "tag", x.date));
-      it.appendChild(top);
-      const d = el("div", null, x.body); d.style.margin = "4px 0 2px"; d.style.fontSize = "13px"; d.style.color = "#c9d4e5";
+      const it = el("details", "iss");
+      const sm = el("summary");
+      const tg = el("span", "tag " + (tagCls[x.tag] || ""), x.tag); tg.style.marginLeft = "0"; sm.appendChild(tg);
+      sm.appendChild(el("b", null, " " + x.title));
+      sm.appendChild(el("span", "tag", x.date));
+      it.appendChild(sm);
+      const d = el("div", "issBody", x.body);
       it.appendChild(d);
       const s = el("div", "muted"); s.appendChild(document.createTextNode("출처: "));
       x.src.forEach(([n, u], i) => { if (i) s.appendChild(document.createTextNode(" · ")); const a = el("a", null, n); a.href = u; a.target = "_blank"; a.rel = "noopener"; s.appendChild(a); });
@@ -1092,6 +1100,13 @@ window.addEventListener("unhandledrejection", function (e) { showErr("비동기 
     set("issueStamp", ISSUE_DATE + " 기준 정리" + (age >= 7 ? " · " + age + "일 지남" : ""), age >= 7 ? "down" : "");
   }
   drawIssues();
+  $("issueAll").addEventListener("click", e => {
+    e.preventDefault();
+    const all = [...document.querySelectorAll("#issues details.iss")];
+    const open = !all.every(d => d.open);
+    all.forEach(d => d.open = open);
+    $("issueAll").textContent = open ? "모두 접기" : "모두 펼치기";
+  });
 
   // ---------- 뉴스 ----------
   async function refreshNews() {
@@ -1637,6 +1652,22 @@ window.addEventListener("unhandledrejection", function (e) { showErr("비동기 
   }
   loadServer(false);
   setInterval(() => loadServer(false), 10 * 60000);
+
+  // ---------- 빈칸 없는 카드 배치 ----------
+  const MAIN = document.querySelector("main");
+  let mqRaf = 0;
+  function masonry() {
+    cancelAnimationFrame(mqRaf);
+    mqRaf = requestAnimationFrame(() => {
+      const cards = MAIN.querySelectorAll(":scope > .card");
+      if (window.innerWidth < 701) { MAIN.classList.remove("masonry"); cards.forEach(c => c.style.gridRowEnd = ""); return; }
+      MAIN.classList.add("masonry");
+      cards.forEach(c => { const h = c.getBoundingClientRect().height; c.style.gridRowEnd = "span " + Math.max(1, Math.ceil((h + 14) / 2)); });
+    });
+  }
+  if ("ResizeObserver" in window) { const ro = new ResizeObserver(masonry); MAIN.querySelectorAll(":scope > .card").forEach(c => ro.observe(c)); }
+  window.addEventListener("resize", masonry);
+  masonry(); setTimeout(masonry, 500); setTimeout(masonry, 3000);
 
   // ---------- 시작 ----------
   connect();
