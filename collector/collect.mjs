@@ -43,12 +43,13 @@ export async function connectXRPL(urls) {
         pend.set(i, m => { clearTimeout(t); m.status === "success" ? ok(m.result) : no(Object.assign(new Error(m.error || "error"), { xrpl: m })); });
         ws.send(JSON.stringify(Object.assign({ id: i }, cmd)));
       });
-      const req = async cmd => {
+      const req = async (cmd, opt = {}) => {
+        const maxTry = opt.retries != null ? opt.retries : 3;
         for (let a = 0; ; a++) {
           try { return await once(cmd); }
           catch (e) {
             const busy = /slowDown|tooBusy|timeout/.test(e.message);
-            if (!busy || a >= 3) throw e;
+            if (!busy || a >= maxTry) throw e;
             await sleep(1500 * (a + 1));
           }
         }
@@ -81,6 +82,9 @@ export async function run({ client, fetchFn = fetch, send = telegramSender(fetch
   cfg = cfg || await readJSON(path.join(ROOT, "config.json"), {});
   const A = Object.assign({ whaleXRP: 10000000, rlusdUSD: 5000000, escrowXRP: 100000000, priceHighKRW: 0, priceLowKRW: 0, kimchiPct: 0, maxPerRun: 15, dailySummaryHourKST: 9 }, cfg.alerts || {});
   const watch = (cfg.watch || []).filter(w => w && w.addr);
+  const t0 = Date.now();
+  const budget = (cfg.maxRunMinutes || 9) * 60000;           // 실행 전체 시간 한도
+  const left = () => budget - (Date.now() - t0);
   await fs.mkdir(DATA, { recursive: true });
   const F = n => path.join(DATA, n);
   const hist = await readJSON(F("history.json"), { min: [], q: [], h: [], px: [] });
@@ -103,13 +107,14 @@ export async function run({ client, fetchFn = fetch, send = telegramSender(fetch
   // 2) 원장 읽기 (동시 4개) → 순서대로 처리
   let b = L.bucketFromState(state.bucket);
   const rows = [];
-  let processed = 0, lastClose = null;
+  let processed = 0, lastClose = null, lastDone = start - 1, stopped = false;
   const C = cfg.concurrency || 4;
   for (let i = start; i <= cur; i += C) {
+    if (left() < 4 * 60000) { stopped = true; console.log(`시간 부족: 원장 ${lastDone}까지 처리, 나머지는 다음 실행에서 이어서`); break; }
     const idx = []; for (let j = i; j < i + C && j <= cur; j++) idx.push(j);
     const res = await Promise.all(idx.map(n => client.req({ command: "ledger", ledger_index: n, transactions: true, expand: true }).catch(e => ({ _err: e, n }))));
     for (const r of res) {
-      if (r._err) { console.warn("원장 읽기 실패:", r.n, r._err.message); continue; }
+      if (r._err) { console.warn("원장 읽기 실패:", r.n, r._err.message); lastDone = r.n; continue; }
       const led = r.ledger;
       const tms = (Number(led.close_time) + L.RIPPLE_EPOCH) * 1000;
       lastClose = tms;
@@ -135,11 +140,12 @@ export async function run({ client, fetchFn = fetch, send = telegramSender(fetch
           push("a" + hash + wh.addr, `👛 <b>${esc(wh.label || L.short(wh.addr))} ${dir}</b>\n${c.type}${c.xrpPay ? " · " + L.xrpShort(c.xrpPay) : c.rlusd ? " · $" + L.nf(c.rlusd) + " RLUSD" : ""}\n${scan(hash)}`, "내 주소");
         }
       }
-      processed++;
+      processed++; lastDone = Number(led.ledger_index) || lastDone + 1;
+      if (processed % 40 === 0) console.log(`  … 원장 ${processed}개 처리`);
     }
   }
   state.bucket = L.bucketToState(b);   // 진행 중인 분은 다음 실행에서 마무리
-  state.lastLedger = cur;
+  state.lastLedger = stopped ? lastDone : cur;
   hist.min = (hist.min || []).concat(rows);
 
   // 3) 시세
@@ -169,7 +175,7 @@ export async function run({ client, fetchFn = fetch, send = telegramSender(fetch
 
   // 4) RLUSD·AMM·업그레이드
   try {
-    const g = await client.req({ command: "gateway_balances", account: L.RLUSD_ISSUER, ledger_index: "validated", strict: true });
+    const g = await client.req({ command: "gateway_balances", account: L.RLUSD_ISSUER, ledger_index: "validated", strict: true }, { retries: 0 });
     const ob = g.obligations || {};
     snap.rlusd = Number(ob[L.RLUSD_HEX] != null ? ob[L.RLUSD_HEX] : ob.RLUSD);
   } catch (e) { console.warn("RLUSD 실패:", e.message); }
@@ -200,33 +206,38 @@ export async function run({ client, fetchFn = fetch, send = telegramSender(fetch
     if (Object.keys(names).length) snap.amendNames = names;
   } catch (e) { console.warn("업그레이드 실패:", e.message); }
 
-  // 5) 물량 분포 (몇 시간마다)
+  // 5) 물량 분포 (몇 시간마다, 시간이 모자라면 다음 실행에서 이어서)
   const supEvery = (cfg.supplyEveryHours || 6) * 3600000;
-  if (!snap.supply || now - snap.supply.at > supEvery) {
+  if (state.scan || !snap.supply || now - snap.supply.at > supEvery) {
     try {
-      const Lg = await client.req({ command: "ledger", ledger_index: "validated" });
-      const total = Number((Lg.ledger || {}).total_coins) / 1e6;
-      const li = Number(Lg.ledger_index || Lg.ledger.ledger_index);
-      let marker, pages = 0, all = 0; const owners = {};
+      let sc = state.scan;
+      if (!sc) {
+        const Lg = await client.req({ command: "ledger", ledger_index: "validated" });
+        sc = { li: Number(Lg.ledger_index || Lg.ledger.ledger_index), total: Number((Lg.ledger || {}).total_coins) / 1e6, marker: null, all: 0, sums: {}, big: [], pages: 0 };
+      }
       do {
-        const cmd = { command: "ledger_data", ledger_index: li, type: "escrow", limit: 400 }; if (marker) cmd.marker = marker;
+        if (left() < 90000) break;
+        const cmd = { command: "ledger_data", ledger_index: sc.li, type: "escrow", limit: 400 }; if (sc.marker) cmd.marker = sc.marker;
         const r = await client.req(cmd);
         for (const o of (r.state || [])) {
           if (o.LedgerEntryType !== "Escrow" || !L.isXRP(o.Amount)) continue;
-          const a = Number(o.Amount) / 1e6; all += a;
-          const w = owners[o.Account] = owners[o.Account] || { sum: 0, list: [] };
-          w.sum += a; w.list.push([a, o.FinishAfter || 0]);
+          const a = Number(o.Amount) / 1e6; sc.all += a;
+          sc.sums[o.Account] = (sc.sums[o.Account] || 0) + a;
+          if (a >= 1e7) sc.big.push([o.Account, a, o.FinishAfter || 0]);
         }
-        marker = r.marker; pages++;
-      } while (marker && pages < 500);
-      let rip = 0, n = 0, acct = 0; const sched = {};
-      for (const w of Object.values(owners)) {
-        if (w.sum < 1e9) continue;
-        rip += w.sum; acct++; n += w.list.length;
-        for (const [a, fa] of w.list) if (fa) { const k = kstDate((fa + L.RIPPLE_EPOCH) * 1000).slice(0, 7); sched[k] = (sched[k] || 0) + a; }
+        sc.marker = r.marker || null; sc.pages++;
+        if (sc.pages % 20 === 0) console.log(`  … 에스크로 ${sc.pages}쪽`);
+      } while (sc.marker && sc.pages < 2000);
+      if (sc.marker) { state.scan = sc; console.log(`물량 집계 진행 중 (${sc.pages}쪽), 다음 실행에서 이어서`); }
+      else {
+        delete state.scan;
+        const ripAcc = Object.keys(sc.sums).filter(k => sc.sums[k] >= 1e9);
+        const rip = ripAcc.reduce((a, k) => a + sc.sums[k], 0);
+        const sched = {}; let n = 0;
+        for (const [acc, a, fa] of sc.big) if (ripAcc.includes(acc)) { n++; if (fa) { const k = kstDate((fa + L.RIPPLE_EPOCH) * 1000).slice(0, 7); sched[k] = (sched[k] || 0) + a; } }
+        snap.supply = { at: now, total: sc.total, escAll: sc.all, escRip: rip, nRip: n, nAcct: ripAcc.length, sched };
+        console.log(`물량 집계 완료: 에스크로 ${L.xrpShort(sc.all)} (리플 ${L.xrpShort(rip)}), ${sc.pages}쪽`);
       }
-      snap.supply = { at: now, total, escAll: all, escRip: rip, nRip: n, nAcct: acct, sched };
-      console.log(`물량 집계: 에스크로 ${L.xrpShort(all)} (리플 ${L.xrpShort(rip)})`);
     } catch (e) { console.warn("물량 집계 실패:", e.message); }
   }
 
