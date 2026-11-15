@@ -1,14 +1,14 @@
 {
- "updatedAt": 1794775665246,
- "lastLedger": 108353170,
- "lastClose": 1794770000000,
- "ledgersThisRun": 20,
- "skipped": 453,
+ "updatedAt": 1794778092045,
+ "lastLedger": 108353759,
+ "lastClose": 1794772461000,
+ "ledgersThisRun": 16,
+ "skipped": 465,
  "node": "wss://xrplcluster.com/",
  "price": {
-  "krw": 1284.75,
-  "usd": 0.962006,
-  "ch": 3.112270569163604
+  "krw": 1283.82,
+  "usd": 0.961313,
+  "ch": 5.577734461999431
  },
  "upbit": 1326,
  "amend": {
