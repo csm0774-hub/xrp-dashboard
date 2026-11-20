@@ -1,16 +1,16 @@
 {
- "updatedAt": 1795214337910,
- "lastLedger": 108462835,
- "lastClose": 1795208860000,
- "ledgersThisRun": 20,
- "skipped": 685,
+ "updatedAt": 1795217277627,
+ "lastLedger": 108463584,
+ "lastClose": 1795211831000,
+ "ledgersThisRun": 44,
+ "skipped": 617,
  "node": "wss://xrplcluster.com/",
  "price": {
-  "krw": 1229.33,
-  "usd": 0.913213,
-  "ch": -4.196658749667556
+  "krw": 1223.35,
+  "usd": 0.908773,
+  "ch": -4.387381730351375
  },
- "upbit": 1262,
+ "upbit": 1252,
  "amend": {
   "enabled": 98,
   "majorities": []
@@ -125,9 +125,9 @@
   "FF2D1E13CF6D22427111B967BD504917F63A900CECD320D6FD3AC9FA90344631": "fixPriceOracleOrder"
  },
  "amm": {
-  "xrp": 2032498.114529,
-  "rl": 1837962.258291709,
-  "px": 0.904287312816341,
+  "xrp": 2025120.425166,
+  "rl": 1842113.264697778,
+  "px": 0.9096314677418649,
   "fee": 315
  },
  "rlusd": 746560892.9415174
