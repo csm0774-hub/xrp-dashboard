@@ -1,19 +1,25 @@
 {
- "updatedAt": 1795634989059,
- "lastLedger": 108568181,
- "lastClose": 1795629412000,
+ "updatedAt": 1795638335553,
+ "lastLedger": 108569025,
+ "lastClose": 1795632782000,
  "ledgersThisRun": 28,
- "skipped": 759,
+ "skipped": 716,
  "node": "wss://xrplcluster.com/",
  "price": {
-  "krw": 1264.4,
-  "usd": 0.941403,
-  "ch": 2.4487490045385423
+  "krw": 1261.57,
+  "usd": 0.938575,
+  "ch": 2.6018702779534917
  },
- "upbit": 1279,
+ "upbit": 1269,
  "amend": {
   "enabled": 98,
-  "majorities": []
+  "majorities": [
+   {
+    "h": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
+    "name": "SingleAssetVault",
+    "close": 848950731
+   }
+  ]
  },
  "amendNames": {
   "00C1FC4A53E60AB02C864641002B3172F38677E29C26C5406685179B37E1EDAC": "RequireFullyCanonicalSig",
