@@ -1,4 +1,6 @@
-[{"t":1795778588282,"kind":"RLUSD","text":"💵 RLUSD 대량 전송 $14,300,050\nrMxCKb…m5De → raRwev…WwZ2","link":"https://xrpscan.com/tx/4F706EBB5B3FD6C239B6E7679F8E7AB5116F2453DD3DB446681D668920577CDA"},
+[{"t":1795790732990,"kind":"업그레이드","text":"⬆️ 업그레이드 80% 찬성 도달: LendingProtocolV1_1\n2주 유지 시 2026-12-11 활성화 예정","link":null},
+{"t":1795790732990,"kind":"업그레이드","text":"⬆️ 업그레이드 80% 찬성 도달: LendingProtocol\n2주 유지 시 2026-12-11 활성화 예정","link":null},
+{"t":1795778588282,"kind":"RLUSD","text":"💵 RLUSD 대량 전송 $14,300,050\nrMxCKb…m5De → raRwev…WwZ2","link":"https://xrpscan.com/tx/4F706EBB5B3FD6C239B6E7679F8E7AB5116F2453DD3DB446681D668920577CDA"},
 {"t":1795739898544,"kind":"일일 요약","text":"📊 XRP 일일 요약 (11/26)\n• 가격: 1,226원 → 1,293원 (+5.5%)\n• 실제 XRP 송금: 1,900.5만 XRP\n• XRP 경유 브릿지: 6건 · 환전 결제 1,646건\n• DEX·AMM 체결: 34.7만 XRP\n• 신규 계정 119개 · 평균 TPS 12.3\n• 소각: 16.60 XRP · 의미 있는 결제 54%\n• RLUSD(XRPL) 유통량: $747,301,760\n수집률 10%","link":null},
 {"t":1795652133121,"kind":"일일 요약","text":"📊 XRP 일일 요약 (11/25)\n• 가격: 1,247원 → 1,220원 (-2.2%)\n• 실제 XRP 송금: 1,430.9만 XRP\n• XRP 경유 브릿지: 5건 · 환전 결제 1,147건\n• DEX·AMM 체결: 13.3만 XRP\n• 신규 계정 78개 · 평균 TPS 12.0\n• 소각: 15.97 XRP · 의미 있는 결제 49%\n• RLUSD(XRPL) 유통량: $753,124,647\n수집률 9%","link":null},
 {"t":1795638335553,"kind":"업그레이드","text":"⬆️ 업그레이드 80% 찬성 도달: SingleAssetVault\n2주 유지 시 2026-12-10 활성화 예정","link":null},

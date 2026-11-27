@@ -1,16 +1,16 @@
 {
- "updatedAt": 1795787227760,
- "lastLedger": 108606951,
- "lastClose": 1795781850000,
- "ledgersThisRun": 56,
- "skipped": 1145,
+ "updatedAt": 1795790732990,
+ "lastLedger": 108607827,
+ "lastClose": 1795785220000,
+ "ledgersThisRun": 28,
+ "skipped": 740,
  "node": "wss://xrplcluster.com/",
  "price": {
-  "krw": 1295.83,
-  "usd": 0.970496,
-  "ch": 1.4015990083308507
+  "krw": 1260.11,
+  "usd": 0.943041,
+  "ch": -1.3707003379643916
  },
- "upbit": 1313,
+ "upbit": 1282,
  "amend": {
   "enabled": 98,
   "majorities": [
@@ -18,6 +18,16 @@
     "h": "81BD2619B6B3C8625AC5D0BC01DE17F06C3F0AB95C7C87C93715B87A4FD240D8",
     "name": "SingleAssetVault",
     "close": 848950731
+   },
+   {
+    "h": "565B90CA1AB2B9D42208ED10884188C64F9E19083DECB9634AAF06EB03299509",
+    "name": "LendingProtocol",
+    "close": 849104522
+   },
+   {
+    "h": "A360E2BFD775A5B0DCE1C36C16DF31B72735A57584FD163655D2F9564F8E7AC8",
+    "name": "LendingProtocolV1_1",
+    "close": 849104522
    }
   ]
  },
